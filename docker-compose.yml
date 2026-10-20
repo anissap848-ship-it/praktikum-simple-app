@@ -1,0 +1,29 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: praktikum-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: praktikum
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppass
+    volumes:
+      - db_data:/var/lib/mysql
+
+  app:
+    image: ${IMAGE_NAME}:latest
+    container_name: praktikum-app
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: appuser
+      DB_PASSWORD: apppass
+      DB_NAME: praktikum
+    ports:
+      - "5000:5000"
+
+volumes:
+  db_data:

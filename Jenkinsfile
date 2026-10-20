@@ -4,8 +4,6 @@ pipeline {
         IMAGE_NAME = 'anissaauliyaputri/simple-app'
         REGISTRY = 'https://index.docker.io/v1/'
         REGISTRY_CREDENTIALS = 'dockerhub-credentials'
-        PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        DOCKER_HOST = "unix:///var/run/docker.sock"
     }
     stages {
         stage('Checkout') {
@@ -17,7 +15,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Mulai build aplikasi'
-                sh 'echo "Build selesai ✅"'
+                echo 'Build selesai'
             }
         }
         stage('Build Docker Image') {
@@ -40,10 +38,33 @@ pipeline {
                 }
             }
         }
+        stage('Deploy (App + MySQL)') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh 'docker compose up -d'
+                    } else {
+                        bat 'docker compose up -d'
+                    }
+                }
+            }
+        }
+        stage('Verify') {
+            steps {
+                sleep time: 20, unit: 'SECONDS'
+                retry(5) {
+                    script {
+                        def check = 'docker exec praktikum-app python -c "import urllib.request; print(urllib.request.urlopen(\'http://localhost:5000/health\').read().decode())"'
+                        if (isUnix()) { sh check } else { bat check }
+                    }
+                    sleep time: 5, unit: 'SECONDS'
+                }
+            }
+        }
     }
     post {
         always {
-            echo 'Selesai build 🏁OYYY'
+            echo 'Selesai build'
         }
     }
 }
